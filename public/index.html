@@ -32,6 +32,7 @@
   .search-box input{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--border);border-radius:0.8rem;padding:1rem;color:var(--text);font-size:0.9rem;outline:none}
   .search-box input:focus{border-color:var(--orange)}
   .search-box button{background:linear-gradient(135deg,var(--orange),var(--red));border:none;color:#fff;padding:0 1.5rem;border-radius:0.8rem;font-weight:800;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;gap:5px}
+  .search-box button:disabled{opacity:0.6;cursor:not-allowed}
   
   .result{display:none;background:var(--card);border:1px solid var(--border);border-radius:1.2rem;overflow:hidden}
   .result.show{display:block;animation:fadeIn .3s}
@@ -101,7 +102,9 @@
 <div class="toast" id="toast">Done</div>
 
 <script>
-const API = '';
+// CRITICAL FIX: Agar frontend aur backend same Vercel app par hain, toh khali chhor dein. 
+// Agar server alag link par hai, toh yahan apna vercel link lagayein jaise: 'https://example.com'
+const API = window.location.origin; 
 let currentData = null;
 let currentType = 'video';
 let lang = localStorage.getItem('lang') || 'en';
@@ -129,109 +132,67 @@ function applySettings() {
 function toggleLang() { lang = lang === 'en' ? 'ur' : 'en'; localStorage.setItem('lang', lang); applySettings(); }
 function toggleTheme() { theme = theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', theme); applySettings(); }
 
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
 async function handleDownload() {
   const url = document.getElementById('urlInput').value.trim();
   if (!url) { showToast('Paste a URL first'); return; }
 
   const btn = document.getElementById('mainBtn');
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+  const origBtnText = btn.innerHTML;
+  
   btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+  document.getElementById('resultBox').classList.remove('show');
 
   try {
-    const res = await fetch(API + '/api/info?url=' + encodeURIComponent(url));
-    const data = await res.json();
-    
-    if (data.error) throw new Error(data.error);
+    // Vercel backend route (/api/download) par request bhej rahe hain
+    const response = await fetch(`${API}/api/download?url=${encodeURIComponent(url)}`);
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'Failed to fetch video details.');
+    }
 
     currentData = data;
-    renderResult(data);
-    
-  } catch (e) {
-    showToast('❌ ' + e.message);
+    renderResult();
+    showToast('Video processed successfully!');
+  } catch (error) {
+    console.error(error);
+    showToast(error.message);
   } finally {
-    btn.innerHTML = '<i class="fas fa-download"></i> <span id="t_btn">' + i18n[lang].btn + '</span>';
     btn.disabled = false;
+    btn.innerHTML = origBtnText;
   }
 }
 
-function renderResult(data) {
-  document.getElementById('resultBox').classList.add('show');
-  document.getElementById('posterImg').src = data.thumbnail;
-  document.getElementById('posterTitle').innerText = data.title;
-  document.getElementById('posterMeta').innerText = data.uploader + ' · ' + formatTime(data.duration);
+function renderResult() {
+  if (!currentData) return;
+
+  document.getElementById('posterImg').src = currentData.thumbnail;
+  document.getElementById('posterTitle').innerText = currentData.title;
   
-  renderFormats('video');
+  const min = Math.floor(currentData.duration / 60);
+  const sec = currentData.duration % 60;
+  document.getElementById('posterMeta').innerText = `Duration: ${min}:${sec < 10 ? '0' : ''}${sec}`;
+
+  switchTab(currentType);
+  document.getElementById('resultBox').classList.add('show');
 }
 
 function switchTab(type) {
   currentType = type;
   document.getElementById('tabVid').classList.toggle('active', type === 'video');
   document.getElementById('tabAud').classList.toggle('active', type === 'audio');
-  renderFormats(type);
-}
 
-function renderFormats(type) {
-  if (!currentData) return;
   const list = document.getElementById('fmtList');
-  
-  if (type === 'video') {
-    const fmts = currentData.videoFormats || [];
-    if (fmts.length === 0) { list.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--dim)">No video formats found</div>'; return; }
-    
-    list.innerHTML = fmts.map(f => `
-      <div class="fmt-row">
-        <div class="fmt-info">${f.quality}
-          <span class="fmt-size">${f.size ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : '~'}</span>
-        </div>
-        <button class="dl-btn" onclick="directDownload('${f.itag}', 'video')"><i class="fas fa-download"></i> Download</button>
-      </div>
-    `).join('');
-  } else {
-    const fmts = currentData.audioFormats || [];
-    if (fmts.length === 0) { list.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--dim)">No audio formats found</div>'; return; }
-    
-    list.innerHTML = fmts.map(f => `
-      <div class="fmt-row">
-        <div class="fmt-info">${f.quality}
-          <span class="fmt-size">${f.size ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : '~'}</span>
-        </div>
-        <button class="dl-btn" style="background:var(--blue)" onclick="directDownload('${f.itag}', 'audio')"><i class="fas fa-download"></i> Download</button>
-      </div>
-    `).join('');
-  }
-}
+  list.innerHTML = '';
 
-function directDownload(itag, type) {
-  const url = document.getElementById('urlInput').value.trim();
-  const dlUrl = API + `/api/download?url=${encodeURIComponent(url)}&itag=${itag}&type=${type}`;
-  
-  const a = document.createElement('a');
-  a.href = dlUrl;
-  a.download = '';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  
-  showToast('Download started...');
-}
-
-function formatTime(sec) {
-  const m = Math.floor(sec / 60), s = sec % 60;
-  return m + ':' + String(s).padStart(2, '0');
-}
-
-let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.innerText = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// Init
-applySettings();
-document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleDownload(); });
-</script>
-</body>
-</html>
+  // Vercel strict layout ke mutabiq direct download url render karna
+  if (currentData && currentData.downloadUrl) {
+    const row = document.createElement('div');
