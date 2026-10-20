@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark" data-lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anjum Downloader v19</title>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;transition:background .3s,color .3s}
+  :root{--orange:#ff6a00;--red:#c8102e;--bg:#0a0508;--card:#15101a;--border:#2a1a1a;--text:#f0e6d2;--dim:#8a7a6a;--green:#2ecc71;--blue:#3498db}
+  html[data-theme="light"]{--bg:#f5f5f7;--card:#fff;--border:#ddd;--text:#111;--dim:#666}
+  html[data-lang="ur"] body{font-family:'Noto Nastaliq Urdu',sans-serif}
+  body{background:var(--bg);color:var(--text);min-height:100vh;padding:1rem;display:flex;justify-content:center}
+  .app{width:100%;max-width:800px;padding:1rem 0}
+  
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand-icon{width:45px;height:45px;border-radius:12px;background:linear-gradient(135deg,var(--orange),var(--red));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem}
+  .brand h1{font-size:1.2rem;font-weight:900;background:linear-gradient(135deg,var(--orange),#f0c000);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .brand span{font-size:0.6rem;color:var(--dim);letter-spacing:1px}
+  .controls{display:flex;gap:0.5rem}
+  .btn-ctrl{background:var(--card);border:1px solid var(--border);color:var(--text);padding:0.5rem 0.8rem;border-radius:2rem;cursor:pointer;font-size:0.7rem;font-weight:700;display:flex;align-items:center;gap:5px}
+  
+  .hero{text-align:center;margin-bottom:1.5rem}
+  .hero h2{font-size:1.5rem;font-weight:900;margin-bottom:0.3rem}
+  .hero h2 span{color:var(--orange)}
+  .hero p{color:var(--dim);font-size:0.85rem}
+  
+  .search-box{background:var(--card);border:1px solid var(--border);border-radius:1.2rem;padding:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+  .search-box input{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--border);border-radius:0.8rem;padding:1rem;color:var(--text);font-size:0.9rem;outline:none}
+  .search-box input:focus{border-color:var(--orange)}
+  .search-box button{background:linear-gradient(135deg,var(--orange),var(--red));border:none;color:#fff;padding:0 1.5rem;border-radius:0.8rem;font-weight:800;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;gap:5px}
+  
+  .result{display:none;background:var(--card);border:1px solid var(--border);border-radius:1.2rem;overflow:hidden}
+  .result.show{display:block;animation:fadeIn .3s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  
+  .poster{position:relative;width:100%;aspect-ratio:16/9;background:#000}
+  .poster img{width:100%;height:100%;object-fit:cover}
+  .poster-info{position:absolute;bottom:0;left:0;right:0;padding:2rem 1rem 1rem;background:linear-gradient(transparent,rgba(0,0,0,0.9))}
+  .poster-title{color:#fff;font-size:1rem;font-weight:800;margin-bottom:0.3rem}
+  .poster-meta{color:#ccc;font-size:0.75rem}
+  
+  .tabs{display:flex;border-bottom:1px solid var(--border)}
+  .tab{flex:1;padding:1rem;text-align:center;font-size:0.8rem;font-weight:800;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent}
+  .tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+  
+  .formats{padding:1rem;display:flex;flex-direction:column;gap:0.5rem;max-height:300px;overflow-y:auto}
+  .fmt-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg);padding:0.8rem 1rem;border-radius:0.8rem;border:1px solid var(--border)}
+  .fmt-info{font-weight:700;font-size:0.85rem}
+  .fmt-size{font-size:0.7rem;color:var(--dim);font-weight:normal;display:block;margin-top:2px}
+  .dl-btn{background:var(--green);border:none;color:#fff;padding:0.5rem 1rem;border-radius:2rem;font-size:0.75rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px}
+  
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--card);border:1px solid var(--orange);padding:0.8rem 1.5rem;border-radius:2rem;font-size:0.8rem;font-weight:600;transition:0.3s;z-index:999}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon"><i class="fas fa-bolt"></i></div>
+      <div>
+        <h1>AnjumDownloader</h1>
+        <span id="t_sub">V19 · ULTIMATE</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn-ctrl" onclick="toggleLang()" id="langBtn">اردو</button>
+      <button class="btn-ctrl" onclick="toggleTheme()" id="themeBtn"><i class="fas fa-moon"></i></button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h2 id="t_hero">Download YouTube <span>Video & Audio</span></h2>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="urlInput" placeholder="Paste YouTube link here..." />
+    <button onclick="handleDownload()" id="mainBtn"><i class="fas fa-download"></i> <span id="t_btn">Download</span></button>
+  </div>
+
+  <div class="result" id="resultBox">
+    <div class="poster">
+      <img id="posterImg" src="" alt="poster">
+      <div class="poster-info">
+        <div class="poster-title" id="posterTitle"></div>
+        <div class="poster-meta" id="posterMeta"></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('video')" id="tabVid"><i class="fas fa-video"></i> <span id="t_vid">Video</span></div>
+      <div class="tab" onclick="switchTab('audio')" id="tabAud"><i class="fas fa-music"></i> <span id="t_aud">Audio</span></div>
+    </div>
+    <div class="formats" id="fmtList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Done</div>
+
+<script>
+const API = '';
+let currentData = null;
+let currentType = 'video';
+let lang = localStorage.getItem('lang') || 'en';
+let theme = localStorage.getItem('theme') || 'dark';
+
+const i18n = {
+  en: { sub:'V19 · ULTIMATE', hero:'Download YouTube <span>Video & Audio</span>', btn:'Download', vid:'Video', aud:'Audio' },
+  ur: { sub:'ویژن 19', hero:'یوٹیوب <span>ویڈیو اور آڈیو</span> ڈاؤن لوڈ کریں', btn:'ڈاؤن لوڈ', vid:'ویڈیو', aud:'آڈیو' }
+};
+
+function applySettings() {
+  document.documentElement.setAttribute('data-lang', lang);
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr';
+  
+  document.getElementById('t_sub').innerText = i18n[lang].sub;
+  document.getElementById('t_hero').innerHTML = i18n[lang].hero;
+  document.getElementById('t_btn').innerText = i18n[lang].btn;
+  document.getElementById('t_vid').innerText = i18n[lang].vid;
+  document.getElementById('t_aud').innerText = i18n[lang].aud;
+  document.getElementById('langBtn').innerText = lang === 'en' ? 'اردو' : 'English';
+  document.getElementById('themeBtn').innerHTML = theme === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+}
+
+function toggleLang() { lang = lang === 'en' ? 'ur' : 'en'; localStorage.setItem('lang', lang); applySettings(); }
+function toggleTheme() { theme = theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', theme); applySettings(); }
+
+async function handleDownload() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { showToast('Paste a URL first'); return; }
+
+  const btn = document.getElementById('mainBtn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(API + '/api/info?url=' + encodeURIComponent(url));
+    const data = await res.json();
+    
+    if (data.error) throw new Error(data.error);
+
+    currentData = data;
+    renderResult(data);
+    
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  } finally {
+    btn.innerHTML = '<i class="fas fa-download"></i> <span id="t_btn">' + i18n[lang].btn + '</span>';
+    btn.disabled = false;
+  }
+}
+
+function renderResult(data) {
+  document.getElementById('resultBox').classList.add('show');
+  document.getElementById('posterImg').src = data.thumbnail;
+  document.getElementById('posterTitle').innerText = data.title;
+  document.getElementById('posterMeta').innerText = data.uploader + ' · ' + formatTime(data.duration);
+  
+  renderFormats('video');
+}
+
+function switchTab(type) {
+  currentType = type;
+  document.getElementById('tabVid').classList.toggle('active', type === 'video');
+  document.getElementById('tabAud').classList.toggle('active', type === 'audio');
+  renderFormats(type);
+}
+
+function renderFormats(type) {
+  if (!currentData) return;
+  const list = document.getElementById('fmtList');
+  
+  if (type === 'video') {
+    const fmts = currentData.videoFormats || [];
+    if (fmts.length === 0) { list.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--dim)">No video formats found</div>'; return; }
+    
+    list.innerHTML = fmts.map(f => `
+      <div class="fmt-row">
+        <div class="fmt-info">${f.quality}
+          <span class="fmt-size">${f.size ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : '~'}</span>
+        </div>
+        <button class="dl-btn" onclick="directDownload('${f.itag}', 'video')"><i class="fas fa-download"></i> Download</button>
+      </div>
+    `).join('');
+  } else {
+    const fmts = currentData.audioFormats || [];
+    if (fmts.length === 0) { list.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--dim)">No audio formats found</div>'; return; }
+    
+    list.innerHTML = fmts.map(f => `
+      <div class="fmt-row">
+        <div class="fmt-info">${f.quality}
+          <span class="fmt-size">${f.size ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : '~'}</span>
+        </div>
+        <button class="dl-btn" style="background:var(--blue)" onclick="directDownload('${f.itag}', 'audio')"><i class="fas fa-download"></i> Download</button>
+      </div>
+    `).join('');
+  }
+}
+
+function directDownload(itag, type) {
+  const url = document.getElementById('urlInput').value.trim();
+  const dlUrl = API + `/api/download?url=${encodeURIComponent(url)}&itag=${itag}&type=${type}`;
+  
+  const a = document.createElement('a');
+  a.href = dlUrl;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  showToast('Download started...');
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Init
+applySettings();
+document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleDownload(); });
+</script>
+</body>
+</html>
