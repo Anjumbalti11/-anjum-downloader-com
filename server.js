@@ -7,17 +7,17 @@ const app = express();
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Home Route (HTML serve karega)
+// Home Route (Frontend load karega)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// API Route (Links extract karega)
+// API Route (Video/Audio links nikale ga)
 app.get('/api/download', async (req, res) => {
-    const url = req.query.url;
+    let url = req.query.url;
     if (!url) return res.status(400).json({ error: 'URL required' });
 
-    // Agar direct mp4/mp3 link hai
+    // Direct MP4/MP3 links handle karein
     if (url.endsWith('.mp4') || url.endsWith('.mp3')) {
         return res.json({
             success: true,
@@ -28,12 +28,17 @@ app.get('/api/download', async (req, res) => {
         });
     }
 
+    // Agar TikTok/Insta ka link ghalti se .mp4 par khatam ho raha ho
+    if (url.includes('tiktok.com') || url.includes('instagram.com')) {
+        url = url.replace(/\.mp4$/i, '');
+    }
+
     try {
         // yt-dlp-exec ke zariye data fetch karein
         const output = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
-            noCheckCertificate: true, // SSL fix
+            noCheckCertificate: true,
             preferFreeFormats: true,
             addHeader: [
                 'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -77,7 +82,8 @@ app.get('/api/download', async (req, res) => {
     }
 });
 
+// Server Start
 const PORT = 5000;
 app.listen(PORT, () => {
-    console.log(`Server running at http://127.0.0.1:${PORT}`);
+    console.log(`✅ Server successfully chalu ho gaya: http://127.0.0.1:${PORT}`);
 });
