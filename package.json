@@ -1,5 +1,20 @@
-"dependencies": {
-  "@ybd-project/ytdl-core": "^6.0.8",
-  "cors": "^2.8.5",
-  "express": "^4.19.2"
+{
+  "name": "anjum-downloader-v19",
+  "version": "19.0.0",
+  "description": "Anjum Downloader v19 web application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["downloader", "express", "video-downloader"],
+  "author": "Anjum",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
 }
