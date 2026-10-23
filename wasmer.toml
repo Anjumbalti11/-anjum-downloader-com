@@ -1,0 +1,11 @@
+[package]
+name = "anjum-downloader-v19"
+version = "19.0.0"
+description = "Anjum Downloader v19 Web Service"
+
+[dependencies]
+"wasmer/edgejs-quickjs" = "0.2.5"
+
+[fs]
+"/public" = "public"
+"/server.js" = "server.js"
