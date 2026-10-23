@@ -1,7 +1,7 @@
 {
   "name": "anjum-downloader",
   "version": "1.0.0",
-  "description": "Media Downloader",
+  "description": "Anjum Media Downloader",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -12,4 +12,3 @@
     "yt-dlp-exec": "^1.0.2"
   }
 }
-
